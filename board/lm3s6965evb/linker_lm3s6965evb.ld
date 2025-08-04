@@ -9,31 +9,32 @@ MEMORY
 }
 
 /* 栈顶与堆边界 */
-_estack = ORIGIN(RAM) + LENGTH(RAM);  /* 栈顶 = RAM 末尾地址 (0x20010000) */
-_stack_size = 0x400;                  /* 栈大小：1KB */
+__StackTop  = ORIGIN(RAM) + LENGTH(RAM);  /* 栈顶 = RAM 末尾地址 (0x20010000) */
+_stack_size = 0x800;                  /* 栈大小：2KB */
 _heap_size = 0x200;                   /* 堆大小：512B */
 
 SECTIONS
 {
     /* 中断向量表 (必须位于 FLASH 起始位置) */
-    .isr_vector : {
-        . = ALIGN(4);
-        KEEP(*(.isr_vector))          /* 保留向量表 */
-        . = ALIGN(4);
+    .init : {
+        KEEP(*(.isr_vector)) /* 向量表 */
+        *(.init)
     } > FLASH
-
     /* 代码段 (.text) 与只读数据 (.rodata) */
     .text : {
+        *(.init)
         *(.text)                      /* 程序代码 */
         *(.text.*)                    /* 子函数代码 */
+        *(.fini)        
         *(.rodata)                    /* 只读常量 */
-        *(.rodata*)
+        *(.rodata*)                   /* 支持 rodata 多段 */
         . = ALIGN(4);
         _etext = .;                   /* 代码结束地址 */
     } > FLASH
 
     /* 初始化数据段 (.data) - 从 FLASH 复制到 RAM */
-    _sidata = LOADADDR(.data);        /* .data 在 FLASH 中的加载地址 */
+    _sidata = _etext;                 /* .data 在 FLASH 中的加载地址 = .text结束 */
+
     .data : AT (_sidata) {
         . = ALIGN(4);
         _sdata = .;                   /* .data 在 RAM 中的起始地址 */
@@ -59,7 +60,7 @@ SECTIONS
         __HeapBase = .;               /* 堆起始地址 */
         . = . + _heap_size;
         . = ALIGN(4);
-        __HeapLimit = .;              /* 堆结束地址 */
+        __HeapLimit = .;             /* 堆结束地址 */
     } > RAM
 
     /* 栈空间 */
@@ -71,3 +72,4 @@ SECTIONS
         __StackTop = .;               /* 栈顶地址 */
     } > RAM
 }
+

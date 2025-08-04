@@ -3,8 +3,12 @@
 .cpu cortex-m3
 .thumb
 
+/* 全局导出符号 - 必须 */
+.global Reset_Handler
+.global Default_Handler
+
 /* 内存布局定义 - 需与链接器脚本匹配 */
-.equ  Stack_Size, 0x00000400     /* 1KB 栈空间 */
+.equ  Stack_Size, 0x00000800     /* 2KB 栈空间 */
 .equ  Heap_Size,  0x00000200      /* 512B 堆空间 */
 
 /* 中断向量表 手册83页*/
@@ -74,8 +78,7 @@ __HeapBase:
 __HeapLimit:
 
 /* 复位处理程序 */
-.section .text.Reset_Handler
-.global Reset_Handler
+.section .text  /* 关键修复：使用标准段名 */
 .type Reset_Handler, %function
 Reset_Handler:
     /* 初始化栈指针 */
