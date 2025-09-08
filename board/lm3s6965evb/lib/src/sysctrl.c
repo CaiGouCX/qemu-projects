@@ -1,3 +1,5 @@
+#include"stdint.h"
+#include <stdbool.h>
 #include "sysctrl.h"
 
 /* ========================== 寄存器定义 ========================== */
@@ -19,11 +21,20 @@
 static void (*sysctrl_handler)(void) = 0;
 
 /* ========================== 系统时钟初始化 ========================== */
-void sysctrl_init(void) {
+void sysctrl_init(SysCtrl_Config *cfg) {
     /* [QEMU 无效] 配置 16MHz 主振荡器（默认） */
     SYSCTL_RCC = 0x078E3AD1; /* 使用主振荡器，无 PLL，分频 1 */
 }
 
+uint32_t SysTick_Config(uint32_t ticks){
+
+
+}
+
+uint32_t SysCtrl_GetSysClockFreq(void){
+
+    return 50000000;
+}
 /* ========================== 使能外设时钟 ========================== */
 void sysctrl_enable_periph(uint32_t periph) {
     /* [QEMU 有效] 使能外设时钟 */

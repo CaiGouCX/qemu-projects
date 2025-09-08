@@ -1,75 +1,113 @@
-/* linker_lm3s6965evb.ld - LM3S6965 链接脚本 */
+/*------------------------------------------------------------------------------
+ * LM3S6965 QEMU Linker Script
+ *----------------------------------------------------------------------------*/
+
 ENTRY(Reset_Handler)
 
 /* 内存区域定义 */
 MEMORY
 {
-    FLASH (rx)  : ORIGIN = 0x00000000, LENGTH = 256K   /* Flash 起始地址与大小 */
-    RAM   (rwx) : ORIGIN = 0x20000000, LENGTH = 64K    /* RAM 起始地址与大小 */
+    FLASH (rx)  : ORIGIN = 0x00000000, LENGTH = 256K
+    RAM   (rwx) : ORIGIN = 0x20000000, LENGTH = 64K
 }
 
 /* 栈顶与堆边界 */
-__StackTop  = ORIGIN(RAM) + LENGTH(RAM);  /* 栈顶 = RAM 末尾地址 (0x20010000) */
-_stack_size = 0x800;                  /* 栈大小：2KB */
-_heap_size = 0x200;                   /* 堆大小：512B */
+__StackTop  = ORIGIN(RAM) + LENGTH(RAM);  /* 栈顶 = RAM 末尾 */
+_stack_size = 0x400;                      /* 栈大小：1KB */
+_heap_size  = 0x800;                      /* 堆大小：2KB */
+
+/* newlib 需要的符号 */
+PROVIDE(__bss_start__ = __bss_start);
+PROVIDE(__bss_end__   = __bss_end);
+PROVIDE(end           = __HeapBase);
+
+/* 导出符号给启动代码使用 */
+PROVIDE(_sdata = __data_start);
+PROVIDE(_edata = __data_end);
+PROVIDE(_sbss  = __bss_start);
+PROVIDE(_ebss  = __bss_end);
 
 SECTIONS
 {
-    /* 中断向量表 (必须位于 FLASH 起始位置) */
-    .init : {
-        KEEP(*(.isr_vector)) /* 向量表 */
-        *(.init)
+    /* 中断向量表 */
+    .isr_vector : {
+        KEEP(*(.isr_vector))
+        . = ALIGN(4);
     } > FLASH
+
     /* 代码段 (.text) 与只读数据 (.rodata) */
     .text : {
+        *(.text)
+        *(.text.*)
+        *(.rodata)
+        *(.rodata*)
         *(.init)
-        *(.text)                      /* 程序代码 */
-        *(.text.*)                    /* 子函数代码 */
-        *(.fini)        
-        *(.rodata)                    /* 只读常量 */
-        *(.rodata*)                   /* 支持 rodata 多段 */
         . = ALIGN(4);
-        _etext = .;                   /* 代码结束地址 */
+        _etext = .;  /* 标记 .text 和 .rodata 的结束地址 */
     } > FLASH
 
-    /* 初始化数据段 (.data) - 从 FLASH 复制到 RAM */
-    _sidata = _etext;                 /* .data 在 FLASH 中的加载地址 = .text结束 */
+    /* ARM 异常索引表 */
+    .ARM.exidx : {
+        __exidx_start = .;
+        *(.ARM.exidx*)
+        __exidx_end = .;
+        . = ALIGN(4);
+    } > FLASH
 
+    /* FinSH 符号表段 */
+    .fsymtab : {
+        __fsymtab_start = .;
+        KEEP(*(.fsymtab*))
+        __fsymtab_end = .;
+        . = ALIGN(4);
+    } > FLASH
+
+    /* 初始化数据段 (.data) */
+    _sidata = .;  /* 将 _sidata 设置为 .fsymtab 结束后的地址 */
     .data : AT (_sidata) {
         . = ALIGN(4);
-        _sdata = .;                   /* .data 在 RAM 中的起始地址 */
-        *(.data)                     
-        *(.data*)                    
+        __data_start = .;
+        *(.data)
+        *(.data*)
         . = ALIGN(4);
-        _edata = .;                   /* .data 在 RAM 中的结束地址 */
+        __data_end = .;
     } > RAM
 
-    /* 未初始化数据段 (.bss) - 启动时清零 */
+    /* 未初始化数据段 (.bss) */
     .bss : {
         . = ALIGN(4);
-        _sbss = .;                    /* .bss 起始地址 */
+        __bss_start = .;
         *(.bss)
-        *(COMMON)                     /* 全局通用变量 */
+        *(COMMON)
         . = ALIGN(4);
-        _ebss = .;                    /* .bss 结束地址 */
+        __bss_end = .;
     } > RAM
 
     /* 堆空间 */
     .heap : {
         . = ALIGN(4);
-        __HeapBase = .;               /* 堆起始地址 */
+        __HeapBase = .;
         . = . + _heap_size;
         . = ALIGN(4);
-        __HeapLimit = .;             /* 堆结束地址 */
+        __HeapLimit = .;
     } > RAM
 
     /* 栈空间 */
     .stack (NOLOAD) : {
         . = ALIGN(8);
-        __StackLimit = .;             /* 栈底地址 */
-        . = . + _stack_size;          /* 分配栈空间 */
+        __StackLimit = .;
+        . = . + _stack_size;
         . = ALIGN(8);
-        __StackTop = .;               /* 栈顶地址 */
+        __StackTop = .;
     } > RAM
-}
 
+    /* 丢弃不必要段 */
+    /DISCARD/ : {
+        *(.fini)
+        *(.fini_array)
+        *(.fini_array*)
+        *(.comment)
+        *(.note*)
+        *(.ARM.attributes)
+    }
+}

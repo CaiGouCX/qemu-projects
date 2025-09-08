@@ -3,6 +3,7 @@
 #define LM3S6965EVB_H
 
 #include <stdint.h>
+#include "inc/hw_types.h"
 #include "sysctrl.h"
 #include "pwm.h"
 #include "qei.h"

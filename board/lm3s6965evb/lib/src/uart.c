@@ -1,5 +1,6 @@
-#include <stdint.h>
-
+#include"stdint.h"
+#include <stdbool.h>
+#include"../inc/uart.h"
 /* ========================== 寄存器定义 ========================== */
 #define SYSCTL_BASE       0x400FE000
 #define SYSCTL_RCGC1      (*((volatile uint32_t *)(SYSCTL_BASE + 0x104)))
@@ -85,4 +86,20 @@ void UART0_Handler(void) {
 
     /* [QEMU 无效] 清除接收中断标志 */
     UART0_ICR = 0x10;
+}
+
+void uart_putc(char c)
+{
+    // 等待发送 FIFO 空
+    while ((UART0_FR & 0x20) != 0); // UART_FR_TXFF = 0x20
+
+    // 发送字符
+    UART0_DR = c;
+
+    // 如果发送的是 '\n'，额外发送 '\r'，保证终端换行正确
+    if (c == '\n')
+    {
+        while ((UART0_FR & 0x20) != 0);
+        UART0_DR = '\r';
+    }
 }

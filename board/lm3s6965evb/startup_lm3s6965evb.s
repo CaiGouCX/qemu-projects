@@ -120,7 +120,7 @@ Reset_Handler:
     bl SystemInit
     
     /* 调用主函数 */
-    bl main
+    bl rtthread_startup
     
     /* 主函数返回后进入死循环 */
 .Loop_After_Main:

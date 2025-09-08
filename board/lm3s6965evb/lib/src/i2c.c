@@ -1,3 +1,5 @@
+#include"stdint.h"
+#include <stdbool.h>
 #include "i2c.h"
 
 /* ========================== 寄存器定义 ========================== */

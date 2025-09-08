@@ -1,3 +1,5 @@
+#include"stdint.h"
+#include <stdbool.h>
 #include "ssi.h"
 
 /* ========================== 寄存器定义 ========================== */

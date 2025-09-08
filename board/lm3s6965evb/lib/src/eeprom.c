@@ -1,3 +1,5 @@
+#include"stdint.h"
+#include <stdbool.h>
 #include "eeprom.h"
 #include "flash.h"
 

@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "sysctrl.h": "c",
+        "board.h": "c",
+        "hw_types.h": "c",
+        "hw_memmap.h": "c",
+        "stdint.h": "c",
+        "stdbool.h": "c",
+        "sysctl.h": "c"
+    }
+}
