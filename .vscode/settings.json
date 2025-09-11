@@ -6,6 +6,10 @@
         "hw_memmap.h": "c",
         "stdint.h": "c",
         "stdbool.h": "c",
-        "sysctl.h": "c"
+        "sysctl.h": "c",
+        "lm3s6965evb.h": "c",
+        "hw_timer.h": "c",
+        "motor_control.h": "c",
+        "pid.h": "c"
     }
 }
