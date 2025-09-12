@@ -24,7 +24,6 @@ extern volatile float setpoint;       // 目标位置
 extern volatile MotorState state;     // 电机状态
 
 
-
 /* 函数原型 */
 void System_Init(void);
 float Parse_Command(uint8_t *buffer, uint32_t len);

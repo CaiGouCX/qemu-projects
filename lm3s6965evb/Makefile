@@ -97,6 +97,7 @@ APP_SRC = \
   $(SRC_DIR)/system_comm.c \
   $(SRC_DIR)/motor_main.c \
   $(SRC_DIR)/lm3s6965evb.c \
+  $(SRC_DIR)/foc.c \
   $(SRC_DIR)/pid.c \
   $(SRC_DIR)/pwm_isr.c \
   $(SRC_DIR)/timer_isr.c \

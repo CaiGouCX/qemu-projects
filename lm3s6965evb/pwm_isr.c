@@ -4,6 +4,7 @@
 
 #include "pid.h"
 #include "motor_control.h"
+#include "foc.h"
 
 // 模拟 PWM 寄存器结构体
 typedef struct {
@@ -45,34 +46,27 @@ volatile float current_feedback;    // 当前电流反馈
 volatile float pid_params_current[3]; // 电流环 PID 参数 (Kp, Ki, Kd)
 volatile MotorState state_current;
 
-void PWM0_Handler(void)  // 标准 CMSIS 风格 ISR 名称
-{
+
+void PWM0_Handler(void)
+{   static FOC_State foc_state;//本来是foc.h下定义extern FOC_State foc_state;此次单纯为了解决空间不足过编译，实际可优化全局变量
     rt_base_t level = rt_hw_interrupt_disable();
-    if (PWM0->RIS & PWM_RIS_GEN0)  // PWM0 生成器 0 中断
+    if (PWM0->RIS & PWM_RIS_GEN0)
     {
-        PWM0->ICR = PWM_ICR_GEN0;  // 清除中断标志
-        // 电流环 PID 计算
-        float current = PID_Compute_Current(setpoint_current, current_feedback, pid_params_current, state_current);
-        // state_current
-        Actuator_Output_Current(current);
+        PWM0->ICR = PWM_ICR_GEN0;
+        // 模拟三相电流和转子角度（QEMU）
+        foc_state.ia = current_feedback;
+        foc_state.ib = -0.5f * current_feedback;
+        foc_state.ic = -0.5f * current_feedback;
+        foc_state.theta += 0.1f; // 模拟角度增量
+        // FOC 控制
+        FOC_Control(foc_state.ia, foc_state.ib, foc_state.ic, foc_state.theta, 0.0f, setpoint_current);
     }
     rt_hw_interrupt_enable(level);
 }
 
-rt_isr_handler_t hw_interrupt_install(int vector,
-                                         rt_isr_handler_t handler,
-                                         void *param,
-                                         const char *name)
-{
-    /* 临时 stub：直接返回传入的 handler，实际功能未实现 */
-    return handler;
-}
-
 void pwm0_init(void)
 {
-    // 模拟硬件初始化（空操作）
     rt_kprintf("PWM0 initialized in QEMU\n");
-    // 注册中断处理程序
-    hw_interrupt_install(PWM0_IRQn, PWM0_Handler, RT_NULL, "PWM0_Handler");
-    // 模拟中断使能
+    init_trig_lut(); // 初始化查找表
+    rt_hw_interrupt_install(PWM0_IRQn, PWM0_Handler, RT_NULL, "PWM0_Handler");
 }
